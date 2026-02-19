@@ -11,13 +11,19 @@ const app = express();
 // ============ Security Middleware ============
 app.use(helmet());
 app.use(cors({
-    origin: true, // Allow all origins (reflects value of Origin header)
+    origin: true,
     credentials: true,
 }));
+app.options('*', cors()); // Enable pre-flight for all routes
 
 // ============ Parsers ============
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
+
+// ============ Root Route (Debug) ============
+app.get('/', (req, res) => {
+    res.json({ message: 'POS Backend is running!', timestamp: new Date() });
+});
 
 // ============ Logging ============
 app.use(morgan('dev'));
