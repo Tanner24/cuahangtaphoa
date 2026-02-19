@@ -206,3 +206,60 @@ export const getMe = async (req: Request, res: Response): Promise<void> => {
         res.status(500).json({ error: 'Lỗi server' });
     }
 };
+export const forgotPassword = async (req: Request, res: Response): Promise<void> => {
+    try {
+        const { username } = req.body; // Số điện thoại
+
+        if (!username) {
+            res.status(400).json({ error: 'Vui lòng cung cấp số điện thoại' });
+            return;
+        }
+
+        // 1. Tìm user
+        const user = await prisma.user.findFirst({
+            where: { username },
+            include: { store: true }
+        });
+
+        if (!user) {
+            res.status(404).json({ error: 'Không tìm thấy tài khoản với số điện thoại này' });
+            return;
+        }
+
+        // 2. Reset mật khẩu về mặc định (123456)
+        const defaultPasswordHash = await bcrypt.hash('123456', 10);
+
+        await prisma.$transaction([
+            // Cập nhật User
+            prisma.user.update({
+                where: { id: user.id },
+                data: { passwordHash: defaultPasswordHash }
+            }),
+            // Tạo Support Ticket báo về SupportPage.jsx
+            prisma.supportTicket.create({
+                data: {
+                    storeId: user.storeId,
+                    subject: `[QUÊN MẬT KHẨU] - ${user.username}`,
+                    priority: 'high',
+                    status: 'open',
+                    messages: {
+                        create: {
+                            senderRole: 'system',
+                            senderName: 'Hệ thống EPOS',
+                            content: `Khách hàng ${user.fullName} (${user.username}) đã yêu cầu khôi phục mật khẩu. Hệ thống đã tự động reset mật khẩu về mặc định (123456). Vui lòng liên hệ với khách hàng để thông báo và hướng dẫn khách hàng đổi lại mật khẩu.`
+                        }
+                    }
+                }
+            })
+        ]);
+
+        res.json({
+            success: true,
+            message: 'Yêu cầu đã được ghi nhận. Mật khẩu của bạn đã được reset về mặc định (123456).'
+        });
+
+    } catch (error) {
+        console.error('Forgot password error:', error);
+        res.status(500).json({ error: 'Lỗi server khi thực hiện khôi phục' });
+    }
+};

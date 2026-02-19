@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { posService } from '../services/api';
 import AnnouncementPopup from '../components/AnnouncementPopup';
 import SupportModal from '../components/SupportModal';
+import InstructionModal from '../components/InstructionModal';
 
 const StatCard = ({ title, value, color, icon, subtext }) => (
     <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
@@ -22,7 +23,8 @@ export default function Dashboard() {
     const [filter, setFilter] = useState('7days');
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [showSupport, setShowSupport] = useState(false); // Added based on instruction
+    const [showSupport, setShowSupport] = useState(false);
+    const [showInstruction, setShowInstruction] = useState(false);
     const [supportInfo, setSupportInfo] = useState({
         hotline: '0975.4214.439',
         zalo: 'https://zalo.me',
@@ -276,15 +278,19 @@ export default function Dashboard() {
                                         </div>
                                         <span className="text-xs font-bold text-slate-600">Zalo OA</span>
                                     </a>
-                                    <a href={supportInfo.help_url} target="_blank" rel="noreferrer" className="flex flex-col items-center justify-center p-4 bg-white border border-slate-100 rounded-2xl hover:shadow-md hover:-translate-y-1 transition-all group">
+
+                                    <button
+                                        onClick={() => setShowInstruction(true)}
+                                        className="flex flex-col items-center justify-center p-4 bg-white border border-slate-100 rounded-2xl hover:shadow-md hover:-translate-y-1 transition-all group cursor-pointer"
+                                    >
                                         <div className="w-10 h-10 bg-emerald-50 rounded-full flex items-center justify-center mb-2 group-hover:bg-emerald-500 group-hover:text-white transition-colors">
                                             <span className="material-icons text-xl">help_outline</span>
                                         </div>
                                         <span className="text-xs font-bold text-slate-600">Hướng dẫn</span>
-                                    </a>
+                                    </button>
                                 </div>
 
-                                <button onClick={() => setShowSupport(true)} className="w-100 p-4 bg-slate-900 text-white rounded-2xl font-black text-sm hover:bg-slate-800 transition-colors shadow-lg shadow-slate-200">
+                                <button onClick={() => setShowSupport(true)} className="w-full p-4 bg-slate-900 text-white rounded-2xl font-black text-sm hover:bg-slate-800 transition-colors shadow-lg shadow-slate-200">
                                     Gửi yêu cầu hỗ trợ ngay
                                 </button>
                             </div>
@@ -293,6 +299,7 @@ export default function Dashboard() {
                 </div>
                 <AnnouncementPopup />
                 <SupportModal isOpen={showSupport} onClose={() => setShowSupport(false)} />
+                <InstructionModal isOpen={showInstruction} onClose={() => setShowInstruction(false)} />
             </div>
         </div>
     );

@@ -82,8 +82,12 @@ export function AuthProvider({ children }) {
         setUser(null);
     };
 
+    const forgotPassword = async (username) => {
+        return authService.forgotPassword(username);
+    };
+
     return (
-        <AuthContext.Provider value={{ user, login, logout, register, loading }}>
+        <AuthContext.Provider value={{ user, login, logout, register, forgotPassword, loading }}>
             {children}
         </AuthContext.Provider>
     );

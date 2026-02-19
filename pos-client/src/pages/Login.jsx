@@ -6,9 +6,10 @@ import toast from 'react-hot-toast';
 import loginImg from '../assets/login-illustration.png';
 
 export default function Login() {
-    const { login, register, user } = useAuth();
+    const { login, register, user, forgotPassword } = useAuth();
     const navigate = useNavigate();
     const [isRegister, setIsRegister] = useState(false);
+    const [isForgotPassword, setIsForgotPassword] = useState(false);
 
     useEffect(() => {
         if (user) {
@@ -74,6 +75,23 @@ export default function Login() {
         }).finally(() => setLoading(false));
     };
 
+    const handleForgotPassword = async (e) => {
+        e.preventDefault();
+        setLoading(true);
+        const promise = forgotPassword(username);
+
+        toast.promise(promise, {
+            loading: 'Đang gửi yêu cầu khôi phục...',
+            success: (res) => res.message || 'Mật khẩu đã được reset về 123456!',
+            error: (err) => err?.message || 'Khôi phục mật khẩu thất bại',
+        }).then(() => {
+            setIsForgotPassword(false);
+            setPassword('');
+        }).catch(err => {
+            console.error(err);
+        }).finally(() => setLoading(false));
+    };
+
     return (
         <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 font-sans text-slate-800">
             {/* Background Decorations */}
@@ -89,10 +107,10 @@ export default function Login() {
                 <div className="w-full md:w-5/12 p-8 md:p-12 flex flex-col justify-center relative">
                     <div className="mb-8">
                         <h2 className="text-3xl font-extrabold text-slate-900 mb-2">
-                            {isRegister ? 'Tạo Cửa Hàng Mới' : 'Chào Mừng Trở Lại!'}
+                            {isRegister ? 'Tạo Cửa Hàng Mới' : isForgotPassword ? 'Quên Mật Khẩu' : 'Chào Mừng Trở Lại!'}
                         </h2>
                         <p className="text-slate-500">
-                            {isRegister ? 'Điền thông tin để bắt đầu kinh doanh ngay.' : 'Đăng nhập để tiếp tục quản lý bán hàng.'}
+                            {isRegister ? 'Điền thông tin để bắt đầu kinh doanh ngay.' : isForgotPassword ? 'Nhập số điện thoại để khôi phục tài khoản.' : 'Đăng nhập để tiếp tục quản lý bán hàng.'}
                         </p>
                     </div>
 
@@ -141,6 +159,38 @@ export default function Login() {
                                 {!loading && <ChevronRight size={20} className="group-hover:translate-x-1 transition-transform" />}
                             </button>
                         </form>
+                    ) : isForgotPassword ? (
+                        <div className="animate-fade-in space-y-6">
+                            <div className="bg-blue-50 p-6 rounded-2xl border border-blue-100">
+                                <h3 className="text-blue-800 font-bold mb-2 flex items-center gap-2 text-lg">
+                                    <Lock className="text-blue-500" size={22} /> Khôi phục mật khẩu
+                                </h3>
+                                <p className="text-sm text-blue-700 leading-relaxed">
+                                    Vì lý do bảo mật, vui lòng nhập số điện thoại của bạn, sau đó liên hệ quản trị viên để được hỗ trợ cấp mật khẩu mới ngay lập tức.
+                                </p>
+                            </div>
+
+                            <form onSubmit={handleForgotPassword} className="space-y-4">
+                                <InputField
+                                    icon={<Phone className="text-blue-500" size={20} />}
+                                    placeholder="Số điện thoại đã đăng ký"
+                                    value={username}
+                                    onChange={e => setUsername(e.target.value)}
+                                    required
+                                    autoFocus
+                                />
+                                <button className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3.5 rounded-xl font-bold shadow-lg shadow-blue-200 transition-all flex items-center justify-center gap-2 py-4">
+                                    Gửi yêu cầu khôi phục
+                                </button>
+                            </form>
+
+                            <button
+                                onClick={() => setIsForgotPassword(false)}
+                                className="w-full text-sm text-slate-500 font-bold hover:text-slate-800 transition-colors py-2"
+                            >
+                                ← Quay lại đăng nhập
+                            </button>
+                        </div>
                     ) : (
                         <form onSubmit={handleLogin} className="space-y-5">
                             <InputField
@@ -161,12 +211,21 @@ export default function Login() {
                                     toggleShow={() => setShowPassword(!showPassword)}
                                 />
                                 <div className="text-right mt-2">
-                                    <a href="#" className="text-xs text-blue-500 font-semibold hover:underline">Quên mật khẩu?</a>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setIsForgotPassword(true);
+                                            setIsRegister(false);
+                                        }}
+                                        className="text-xs text-blue-500 font-semibold hover:underline bg-transparent border-none p-0 cursor-pointer"
+                                    >
+                                        Quên mật khẩu?
+                                    </button>
                                 </div>
                             </div>
 
                             <button disabled={loading} className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3.5 rounded-xl font-bold shadow-lg shadow-blue-200 transition-all mt-2 flex items-center justify-center gap-2 group">
-                                {loading ? 'Đang đăng nhập...' : 'Đăng Nhập'}
+                                {loading ? 'Đăng nhập...' : 'Đăng Nhập'}
                                 {!loading && <ChevronRight size={20} className="group-hover:translate-x-1 transition-transform" />}
                             </button>
                         </form>
@@ -174,12 +233,15 @@ export default function Login() {
 
                     <div className="mt-8 pt-6 border-t border-slate-100 text-center">
                         <p className="text-slate-600 text-sm">
-                            {isRegister ? 'Đã có tài khoản?' : 'Chưa có tài khoản?'}
+                            {isForgotPassword ? 'Bất kỳ khó khăn nào?' : isRegister ? 'Đã có tài khoản?' : 'Chưa có tài khoản?'}
                             <button
-                                onClick={() => setIsRegister(!isRegister)}
+                                onClick={() => {
+                                    setIsRegister(!isRegister);
+                                    setIsForgotPassword(false);
+                                }}
                                 className="ml-2 text-blue-600 font-bold hover:text-blue-700 hover:underline transition-colors"
                             >
-                                {isRegister ? 'Đăng nhập' : 'Đăng ký miễn phí'}
+                                {isForgotPassword ? 'Liên hệ hỗ trợ' : isRegister ? 'Đăng nhập' : 'Đăng ký miễn phí'}
                             </button>
                         </p>
                     </div>
@@ -194,13 +256,46 @@ export default function Login() {
                         className="absolute inset-0 w-full h-full object-cover mix-blend-overlay opacity-50"
                     />
 
-                    <div className="relative z-20 text-white max-w-lg text-center">
-                        <h3 className="text-4xl font-bold mb-6 leading-tight">Quản lý bán hàng thông minh & Hiệu quả</h3>
-                        <ul className="text-left space-y-4 text-blue-100 text-lg mx-auto inline-block">
-                            <li className="flex items-center gap-3"><span className="bg-white/20 p-1 rounded-full">✓</span> Quản lý tồn kho chính xác</li>
-                            <li className="flex items-center gap-3"><span className="bg-white/20 p-1 rounded-full">✓</span> Báo cáo doanh thu thời gian thực</li>
-                            <li className="flex items-center gap-3"><span className="bg-white/20 p-1 rounded-full">✓</span> Dễ dàng sử dụng trên mọi thiết bị</li>
-                        </ul>
+                    <div className="relative z-20 text-white max-w-lg text-center flex flex-col h-full w-full">
+                        <div className="flex-1 flex flex-col justify-center">
+                            <h2 className="text-5xl font-black mb-4 tracking-tight italic">EPOS PRO</h2>
+                            <p className="text-xl font-medium mb-10 text-blue-100/80 leading-relaxed">
+                                Quản lý bán hàng thông minh & hiệu quả
+                            </p>
+
+                            <div className="space-y-4 text-left inline-block mx-auto bg-white/5 p-6 rounded-2xl backdrop-blur-sm border border-white/10">
+                                <div className="flex items-start gap-3">
+                                    <div className="w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center shrink-0 mt-0.5 text-white shadow-lg shadow-emerald-500/20">
+                                        <ChevronRight size={14} />
+                                    </div>
+                                    <span className="text-blue-50 font-medium">Quản lý tồn kho chính xác</span>
+                                </div>
+                                <div className="flex items-start gap-3">
+                                    <div className="w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center shrink-0 mt-0.5 text-white shadow-lg shadow-emerald-500/20">
+                                        <ChevronRight size={14} />
+                                    </div>
+                                    <span className="text-blue-50 font-medium">Báo cáo doanh thu thời gian thực</span>
+                                </div>
+                                <div className="flex items-start gap-3">
+                                    <div className="w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center shrink-0 mt-0.5 text-white shadow-lg shadow-emerald-500/20">
+                                        <ChevronRight size={14} />
+                                    </div>
+                                    <span className="text-blue-50 font-medium">Dễ dàng sử dụng trên mọi thiết bị</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="mt-auto pt-8">
+                            <p className="text-[13px] text-white/80 font-medium mb-1">Thiết kế & Phát triển bởi</p>
+                            <a
+                                href="https://web.facebook.com/profile.php?id=61575341679426"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-white hover:text-blue-200 transition-all font-black uppercase tracking-widest text-[16px] border-b border-white/20 pb-1"
+                            >
+                                Tiền Hải Agency
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>

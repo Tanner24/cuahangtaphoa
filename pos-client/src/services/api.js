@@ -61,6 +61,9 @@ export const authService = {
     },
     getMe: async () => {
         return api.get('/auth/me');
+    },
+    forgotPassword: async (username) => {
+        return api.post('/auth/forgot-password', { username });
     }
 };
 
