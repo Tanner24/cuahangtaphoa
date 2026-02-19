@@ -12,10 +12,12 @@ const app = express();
 app.use(helmet());
 app.use(cors({
     origin: [
-        'http://localhost:3000',        // Admin Dashboard (dev)
-        'http://localhost:8000',        // POS App (dev)
-        'http://localhost:5173',        // Vite Default Port
-        'https://admin.tenmien.com',   // Admin Dashboard (prod)
+        'http://localhost:3000',
+        'http://localhost:8000',
+        'http://localhost:5173',
+        'https://admin.tenmien.com',
+        process.env.FRONTEND_URL || '', // Allow explicit frontend URL
+        /\.vercel\.app$/,               // Allow all Vercel deployments (Frontend & Backend self-calls)
     ],
     credentials: true,
 }));
