@@ -5,7 +5,7 @@ import { AuthRequest } from '../middleware/auth';
 // Tìm kiếm khách hàng
 export const searchCustomers = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
-        const storeId = parseInt(req.user?.storeId || '0');
+        const storeId = req.user?.storeId || 0;
         const { query } = req.query;
 
         if (!query || String(query).length < 2) {
@@ -33,7 +33,7 @@ export const searchCustomers = async (req: AuthRequest, res: Response): Promise<
 // Tạo nhanh khách hàng
 export const createCustomer = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
-        const storeId = parseInt(req.user?.storeId || '0');
+        const storeId = req.user?.storeId || 0;
         const { name, phone, address } = req.body;
 
         if (!name) {

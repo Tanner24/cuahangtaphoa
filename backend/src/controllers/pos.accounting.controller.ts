@@ -4,7 +4,7 @@ import { AuthRequest } from '../middleware/auth';
 
 export const createAccountingEntry = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
-        const storeId = parseInt(req.user?.storeId || '0');
+        const storeId = req.user?.storeId || 0;
         const { type, data } = req.body; // type: 'import', 'expense', 'tax', 'salary'
 
         if (!storeId) {

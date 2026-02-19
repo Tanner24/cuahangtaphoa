@@ -4,7 +4,7 @@ import { AuthRequest } from '../middleware/auth';
 
 export const getPosDashboard = async (req: any, res: Response): Promise<void> => {
     try {
-        const storeId = parseInt(req.user?.storeId || '0');
+        const storeId = req.user?.storeId || 0;
         const period = req.query.period as string || '7days';
 
         let startDate = new Date();

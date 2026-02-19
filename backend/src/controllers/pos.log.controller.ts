@@ -5,7 +5,7 @@ import { AuthRequest } from '../middleware/auth';
 
 export const getSystemLogs = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
-        const storeId = parseInt(req.user?.storeId || '0');
+        const storeId = req.user?.storeId || 0;
         const { page, limit, startDate, endDate, action } = req.query;
 
         const p = parseInt(String(page)) || 1;

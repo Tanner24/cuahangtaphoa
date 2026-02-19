@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 const menuItems = [
@@ -8,9 +9,17 @@ const menuItems = [
     { path: '/logs', label: 'Nhật ký', icon: '📋' },
 ];
 
+const systems = [
+    { id: 'admin', name: 'POS Admin', subtitle: 'SaaS Center', icon: 'P', color: 'linear-gradient(135deg, var(--color-accent), var(--color-accent-light))', url: '/' },
+    { id: 'epos', name: 'Epos Pro', subtitle: 'Enterprise', icon: 'E', color: 'linear-gradient(135deg, #00d2a0, #55efc4)', url: '/epos-pro' },
+    { id: 'jp', name: 'Nippon POS', subtitle: 'Japan Edition', icon: '日', color: 'linear-gradient(135deg, #ff6b81, #fab1a0)', url: '/jp' },
+];
+
 function Sidebar({ user, onLogout }) {
     const location = useLocation();
     const navigate = useNavigate();
+    const [isSwitcherOpen, setIsSwitcherOpen] = useState(false);
+    const [currentSystem, setCurrentSystem] = useState(systems[0]);
 
     const handleLogout = () => {
         if (confirm('Bạn có chắc muốn đăng xuất?')) {
@@ -19,14 +28,52 @@ function Sidebar({ user, onLogout }) {
         }
     };
 
+    const handleSystemChange = (system) => {
+        setCurrentSystem(system);
+        setIsSwitcherOpen(false);
+        // In a real app, this might redirect to a different URL
+        // navigate(system.url);
+    };
+
     return (
         <aside className="sidebar">
-            {/* Header */}
+            {/* Header / System Switcher */}
             <div className="sidebar-header">
-                <div className="sidebar-logo">P</div>
-                <div className="sidebar-title">
-                    <h2>POS Admin</h2>
-                    <span>SaaS Center</span>
+                <div className="system-switcher">
+                    <div
+                        className={`switcher-trigger ${isSwitcherOpen ? 'open' : ''}`}
+                        onClick={() => setIsSwitcherOpen(!isSwitcherOpen)}
+                    >
+                        <div className="sidebar-logo" style={{ background: currentSystem.color }}>
+                            {currentSystem.icon}
+                        </div>
+                        <div className="sidebar-title">
+                            <h2>{currentSystem.name}</h2>
+                            <span>{currentSystem.subtitle}</span>
+                        </div>
+                        <div className="switcher-chevron">▾</div>
+                    </div>
+
+                    <div className={`switcher-dropdown ${isSwitcherOpen ? 'open' : ''}`}>
+                        {systems.map((sys) => (
+                            <div
+                                key={sys.id}
+                                className={`switcher-item ${currentSystem.id === sys.id ? 'active' : ''}`}
+                                onClick={() => handleSystemChange(sys)}
+                            >
+                                <div className="switcher-mini-logo" style={{ background: sys.color }}>
+                                    {sys.icon}
+                                </div>
+                                <div className="switcher-info">
+                                    <strong>{sys.name}</strong>
+                                    <span>{sys.subtitle}</span>
+                                </div>
+                                {currentSystem.id === sys.id && (
+                                    <div className="switcher-active-indicator" />
+                                )}
+                            </div>
+                        ))}
+                    </div>
                 </div>
             </div>
 

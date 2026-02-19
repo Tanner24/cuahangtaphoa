@@ -21,6 +21,19 @@ export default function Login() {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
+    const [rememberMe, setRememberMe] = useState(false);
+
+    useEffect(() => {
+        const savedUsername = localStorage.getItem('remembered_username');
+        const savedPassword = localStorage.getItem('remembered_password');
+        if (savedUsername) {
+            setUsername(savedUsername);
+            setRememberMe(true);
+        }
+        if (savedPassword) {
+            setPassword(savedPassword);
+        }
+    }, []);
 
     // Register States
     const [storeName, setStoreName] = useState('');
@@ -33,6 +46,16 @@ export default function Login() {
     const handleLogin = async (e) => {
         e.preventDefault();
         setLoading(true);
+
+        // Handle remember me
+        if (rememberMe) {
+            localStorage.setItem('remembered_username', username);
+            localStorage.setItem('remembered_password', password);
+        } else {
+            localStorage.removeItem('remembered_username');
+            localStorage.removeItem('remembered_password');
+        }
+
         // Toast loading promise
         const loginPromise = login(username, password);
 
@@ -210,7 +233,32 @@ export default function Login() {
                                     showPassword={showPassword}
                                     toggleShow={() => setShowPassword(!showPassword)}
                                 />
-                                <div className="text-right mt-2">
+                                <div className="flex items-center justify-between mt-4">
+                                    <label className="flex items-center gap-2 cursor-pointer group">
+                                        <div className="relative flex items-center">
+                                            <input
+                                                type="checkbox"
+                                                className="peer appearance-none w-5 h-5 border-2 border-slate-300 rounded-md checked:bg-blue-600 checked:border-blue-600 transition-all cursor-pointer"
+                                                checked={rememberMe}
+                                                onChange={e => setRememberMe(e.target.checked)}
+                                            />
+                                            <svg
+                                                className="absolute w-3.5 h-3.5 text-white opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none left-0.5"
+                                                xmlns="http://www.w3.org/2000/svg"
+                                                viewBox="0 0 24 24"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                strokeWidth="4"
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                            >
+                                                <polyline points="20 6 9 17 4 12"></polyline>
+                                            </svg>
+                                        </div>
+                                        <span className="text-sm text-slate-500 font-semibold group-hover:text-slate-700 transition-colors">
+                                            Tự động đăng nhập
+                                        </span>
+                                    </label>
                                     <button
                                         type="button"
                                         onClick={() => {

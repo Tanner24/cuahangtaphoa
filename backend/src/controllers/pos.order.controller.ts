@@ -6,8 +6,8 @@ import { logAudit } from '../utils/audit';
 // Tạo hóa đơn mới (checkout)
 export const createOrder = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
-        const storeId = parseInt(req.user?.storeId || '0');
-        const userId = parseInt(req.user?.userId || '0');
+        const storeId = req.user?.storeId || 0;
+        const userId = req.user?.userId || 0;
         const { items, paymentMethod, customerId, note, discount } = req.body;
 
         if (!items || items.length === 0) {
@@ -119,7 +119,7 @@ export const getMyOrders = async (req: AuthRequest, res: Response): Promise<void
 // Hủy đơn hàng (Delete Invoice)
 export const deleteOrder = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
-        const storeId = parseInt(req.user?.storeId || '0');
+        const storeId = req.user?.storeId || 0;
         const orderId = parseInt(req.params.id);
 
         if (!orderId) {

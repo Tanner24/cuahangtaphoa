@@ -4,7 +4,7 @@ import { AuthRequest } from '../middleware/auth';
 
 export const getStoreInfo = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
-        const storeId = parseInt(req.user?.storeId || '0');
+        const storeId = req.user?.storeId || 0;
         if (!storeId) {
             res.status(400).json({ error: 'Store ID không hợp lệ' });
             return;
@@ -62,7 +62,7 @@ export const getStoreInfo = async (req: AuthRequest, res: Response): Promise<voi
 
 export const updateStoreInfo = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
-        const storeId = parseInt(req.user?.storeId || '0');
+        const storeId = req.user?.storeId || 0;
         console.log('Updating store info for storeId:', storeId);
 
         if (!storeId) {

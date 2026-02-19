@@ -4,7 +4,7 @@ import { AuthRequest } from '../middleware/auth';
 
 export const getDebtors = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
-        const storeId = parseInt(req.user?.storeId || '0');
+        const storeId = req.user?.storeId || 0;
         const { search } = req.query;
 
         // In absence of actual "Debt" table, we might aggregate from invoices (DEBT) or just use customer debt field (if exists)

@@ -19,7 +19,7 @@ export const signReport = async (req: AuthRequest, res: Response): Promise<void>
 
 export const getReportData = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
-        const storeId = parseInt(req.user?.storeId || '0');
+        const storeId = req.user?.storeId || 0;
         const month = parseInt(req.query.month as string) || new Date().getMonth() + 1;
         const year = parseInt(req.query.year as string) || new Date().getFullYear();
         const type = req.query.type as string || 'tax'; // tax | accounting

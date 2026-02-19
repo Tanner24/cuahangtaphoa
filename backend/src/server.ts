@@ -97,12 +97,13 @@ const PORT = config.port || 3000;
 
 // Only start server if not running in Vercel (Vercel handles the server via 'export default app')
 if (process.env.VERCEL !== '1') {
-    app.listen(PORT, () => {
+    app.listen(PORT, '0.0.0.0', () => {
         console.log(`
     ╔══════════════════════════════════════════════╗
     ║     🚀 POS SaaS Backend API Server          ║
     ║                                              ║
     ║     Port:    ${PORT}                          ║
+    ║     Host:    0.0.0.0                         ║
     ║     Env:     ${config.nodeEnv.padEnd(30)}║
     ║     Time:    ${new Date().toLocaleString('vi-VN').padEnd(30)}║
     ║                                              ║

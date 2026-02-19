@@ -1,0 +1,52 @@
+{
+  "expo": {
+    "name": "EPOS Pro",
+    "slug": "epos-pro",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/logo.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/logo.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.epos.pro.mobile"
+    },
+    "android": {
+      "package": "com.epos.pro.mobile",
+      "versionCode": 1,
+      "usesCleartextTraffic": true,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/logo.png",
+        "backgroundColor": "#ffffff"
+      },
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/logo.png"
+    },
+    "plugins": [
+      "expo-font",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Cho phép EPOS Pro truy cập camera để quét mã vạch."
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "69f49cf2-b2fb-4c95-beb5-084675572538"
+      }
+    }
+  }
+}

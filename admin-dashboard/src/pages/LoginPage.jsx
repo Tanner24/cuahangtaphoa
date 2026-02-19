@@ -1,11 +1,26 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import api from '../services/api';
+import { Eye, EyeOff } from 'lucide-react';
 
 function LoginPage({ onLogin }) {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
+    const [rememberMe, setRememberMe] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+
+    useEffect(() => {
+        const savedUsername = localStorage.getItem('admin_remembered_username');
+        const savedPassword = localStorage.getItem('admin_remembered_password');
+        if (savedUsername) {
+            setUsername(savedUsername);
+            setRememberMe(true);
+        }
+        if (savedPassword) {
+            setPassword(savedPassword);
+        }
+    }, []);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -13,6 +28,14 @@ function LoginPage({ onLogin }) {
         setLoading(true);
 
         try {
+            if (rememberMe) {
+                localStorage.setItem('admin_remembered_username', username);
+                localStorage.setItem('admin_remembered_password', password);
+            } else {
+                localStorage.removeItem('admin_remembered_username');
+                localStorage.removeItem('admin_remembered_password');
+            }
+
             const data = await api.login(username, password);
             onLogin(data.user);
         } catch (err) {
@@ -51,15 +74,47 @@ function LoginPage({ onLogin }) {
 
                 <div className="form-group">
                     <label className="form-label" htmlFor="password">Mật khẩu</label>
-                    <input
-                        id="password"
-                        className="form-input"
-                        type="password"
-                        placeholder="••••••••"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        required
-                    />
+                    <div className="input-with-icon" style={{ position: 'relative' }}>
+                        <input
+                            id="password"
+                            className="form-input"
+                            type={showPassword ? "text" : "password"}
+                            placeholder="••••••••"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            required
+                        />
+                        <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            style={{
+                                position: 'absolute',
+                                right: '10px',
+                                top: '50%',
+                                transform: 'translateY(-50%)',
+                                background: 'none',
+                                border: 'none',
+                                cursor: 'pointer',
+                                color: 'var(--color-text-muted)',
+                                display: 'flex',
+                                alignItems: 'center'
+                            }}
+                        >
+                            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                        </button>
+                    </div>
+                </div>
+
+                <div className="form-group" style={{ marginBottom: '1rem' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.875rem' }}>
+                        <input
+                            type="checkbox"
+                            checked={rememberMe}
+                            onChange={(e) => setRememberMe(e.target.checked)}
+                            style={{ width: '16px', height: '16px' }}
+                        />
+                        <span>Tự động đăng nhập</span>
+                    </label>
                 </div>
 
                 <button
