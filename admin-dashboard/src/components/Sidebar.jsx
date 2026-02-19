@@ -46,6 +46,16 @@ function Sidebar({ user, onLogout }) {
                     </button>
                 ))}
 
+                <span className="nav-section-title">Ứng dụng</span>
+                <button
+                    className="nav-item pos-link"
+                    style={{ background: 'var(--color-primary-light)', color: 'var(--color-primary)', fontWeight: 'bold' }}
+                    onClick={() => window.open(import.meta.env.VITE_POS_CLIENT_URL || 'https://pos-client.vercel.app', '_blank')}
+                >
+                    <span className="nav-item-icon">🖥️</span>
+                    <span>Mở Máy Bán Hàng</span>
+                </button>
+
                 <span className="nav-section-title" style={{ marginTop: 'auto' }}>Hệ thống</span>
                 <button
                     className={`nav-item ${location.pathname === '/settings' ? 'active' : ''}`}
