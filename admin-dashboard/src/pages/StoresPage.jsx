@@ -236,7 +236,7 @@ function StoresPage() {
                                                 {canSupport && (
                                                     <button
                                                         className="btn btn-primary btn-sm"
-                                                        onClick={() => window.open(`http://pos.local/sale.php?store_id=${store.id}`, '_blank')}
+                                                        onClick={() => window.open(import.meta.env.VITE_POS_CLIENT_URL || 'https://pos-client.vercel.app', '_blank')}
                                                         title="Truy cập POS"
                                                         style={{ display: 'flex', alignItems: 'center', gap: 4 }}
                                                     >
