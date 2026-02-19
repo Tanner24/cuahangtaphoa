@@ -1,0 +1,89 @@
+import express from 'express';
+import cors from 'cors';
+import helmet from 'helmet';
+import morgan from 'morgan';
+import { config } from './config';
+import authRoutes from './routes/auth.routes';
+import adminRoutes from './routes/admin.routes';
+
+const app = express();
+
+// ============ Security Middleware ============
+app.use(helmet());
+app.use(cors({
+    origin: [
+        'http://localhost:3000',        // Admin Dashboard (dev)
+        'http://localhost:8000',        // POS App (dev)
+        'http://localhost:5173',        // Vite Default Port
+        'https://admin.tenmien.com',   // Admin Dashboard (prod)
+    ],
+    credentials: true,
+}));
+
+// ============ Parsers ============
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true }));
+
+// ============ Logging ============
+app.use(morgan('dev'));
+
+// ============ Rate Limiting ============
+// TODO: Implement rate limiting for login endpoint
+// import rateLimit from 'express-rate-limit';
+// const loginLimiter = rateLimit({ windowMs: 15*60*1000, max: 5 });
+
+// ============ Routes ============
+import posRoutes from './routes/pos.routes';
+
+import managementRoutes from './routes/management.routes';
+import webhookRoutes from './routes/webhook.routes';
+
+app.use('/auth', authRoutes);
+app.use('/admin', adminRoutes);
+app.use('/pos', posRoutes);
+app.use('/management', managementRoutes); // New Management routes
+app.use('/webhooks', webhookRoutes);
+
+// Health check
+app.get('/health', (req, res) => {
+    res.json({
+        status: 'OK',
+        timestamp: new Date().toISOString(),
+        version: '1.0.0',
+        environment: config.nodeEnv,
+    });
+});
+
+// 404 Handler
+app.use((req, res) => {
+    res.status(404).json({ error: 'Endpoint không tồn tại' });
+});
+
+// Error Handler
+app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
+    console.error('=== GLOBAL ERROR ===');
+    console.error('URL:', req.method, req.url);
+    console.error('Error:', err.message);
+    console.error('Stack:', err.stack);
+    console.error('===================');
+    res.status(500).json({ error: 'Lỗi server nội bộ', detail: err.message });
+});
+
+// ============ Start Server ============
+app.listen(config.port, () => {
+    console.log(`
+╔══════════════════════════════════════════════╗
+║     🚀 POS SaaS Backend API Server          ║
+║                                              ║
+║     Port:    ${config.port}                          ║
+║     Env:     ${config.nodeEnv.padEnd(30)}║
+║     Time:    ${new Date().toLocaleString('vi-VN').padEnd(30)}║
+║                                              ║
+║     Auth:    /auth/login                     ║
+║     Admin:   /admin/*                        ║
+║     Health:  /health                         ║
+╚══════════════════════════════════════════════╝
+  `);
+});
+
+export default app;
