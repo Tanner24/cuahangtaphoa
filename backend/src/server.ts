@@ -11,8 +11,9 @@ const app = express();
 // ============ Security Middleware ============
 app.use(helmet());
 app.use(cors({
-    origin: true,
-    credentials: true,
+    origin: '*',
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 app.options('*', cors()); // Enable pre-flight for all routes
 
