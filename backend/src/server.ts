@@ -70,20 +70,34 @@ app.use((err: Error, req: express.Request, res: express.Response, next: express.
 });
 
 // ============ Start Server ============
-app.listen(config.port, () => {
-    console.log(`
-╔══════════════════════════════════════════════╗
-║     🚀 POS SaaS Backend API Server          ║
-║                                              ║
-║     Port:    ${config.port}                          ║
-║     Env:     ${config.nodeEnv.padEnd(30)}║
-║     Time:    ${new Date().toLocaleString('vi-VN').padEnd(30)}║
-║                                              ║
-║     Auth:    /auth/login                     ║
-║     Admin:   /admin/*                        ║
-║     Health:  /health                         ║
-╚══════════════════════════════════════════════╝
-  `);
-});
+if (process.env.NODE_ENV !== 'production' || process.env.VERCEL_ENV !== 'production') {
+    // Only listen if not running in production Vercel environment (or if explicitly needed)
+    // Actually, Vercel imports this file, so we should check if we are main module.
+    // However, es module check is tricky. Let's use a simple env var check or just export app.
+    // Better strategy: Only listen if NOT imported.
+    // unique to node: require.main === module (CommonJS) or import.meta.url === process.argv[1] (ESM)
+}
+
+// Support Vercel Serverless
+const PORT = config.port || 3000;
+
+// Only start server if not running in Vercel (Vercel handles the server via 'export default app')
+if (process.env.VERCEL !== '1') {
+    app.listen(PORT, () => {
+        console.log(`
+    ╔══════════════════════════════════════════════╗
+    ║     🚀 POS SaaS Backend API Server          ║
+    ║                                              ║
+    ║     Port:    ${PORT}                          ║
+    ║     Env:     ${config.nodeEnv.padEnd(30)}║
+    ║     Time:    ${new Date().toLocaleString('vi-VN').padEnd(30)}║
+    ║                                              ║
+    ║     Auth:    /auth/login                     ║
+    ║     Admin:   /admin/*                        ║
+    ║     Health:  /health                         ║
+    ╚══════════════════════════════════════════════╝
+      `);
+    });
+}
 
 export default app;
