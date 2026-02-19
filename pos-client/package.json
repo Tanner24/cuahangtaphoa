@@ -1,7 +1,6 @@
 {
     "name": "pos-client",
     "version": "1.0.0",
-    "homepage": "https://Tanner24.github.io/cuahangtaphoa/",
     "type": "module",
     "scripts": {
         "dev": "vite",
