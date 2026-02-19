@@ -1,5 +1,8 @@
 {
   "dependencies": {
     "react-hot-toast": "^2.6.0"
+  },
+  "devDependencies": {
+    "gh-pages": "^6.3.0"
   }
 }
