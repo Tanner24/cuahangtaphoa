@@ -3,6 +3,18 @@ import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import { config } from './config';
+import { Prisma } from '@prisma/client';
+
+// Fix BigInt serialization
+(BigInt.prototype as any).toJSON = function () {
+    return this.toString();
+};
+
+// Fix Prisma Decimal serialization
+(Prisma.Decimal.prototype as any).toJSON = function () {
+    return this.toString();
+};
+
 import authRoutes from './routes/auth.routes';
 import adminRoutes from './routes/admin.routes';
 

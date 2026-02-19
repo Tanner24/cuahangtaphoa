@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { User, Lock, Store, Eye, EyeOff, Phone, ChevronRight } from 'lucide-react';
@@ -6,9 +6,15 @@ import toast from 'react-hot-toast';
 import loginImg from '../assets/login-illustration.png';
 
 export default function Login() {
-    const { login, register } = useAuth();
+    const { login, register, user } = useAuth();
     const navigate = useNavigate();
     const [isRegister, setIsRegister] = useState(false);
+
+    useEffect(() => {
+        if (user) {
+            navigate('/pos');
+        }
+    }, [user, navigate]);
 
     // Login States
     const [username, setUsername] = useState('');

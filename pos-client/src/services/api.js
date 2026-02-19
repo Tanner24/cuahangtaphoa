@@ -58,6 +58,9 @@ export const authService = {
             localStorage.setItem('pos_user', JSON.stringify(response.user));
         }
         return response;
+    },
+    getMe: async () => {
+        return api.get('/auth/me');
     }
 };
 
@@ -66,7 +69,8 @@ export const posService = {
     getProductByBarcode: (barcode) => api.get(`/pos/products/${barcode}`),
     createProduct: (data) => api.post('/pos/products', data), // Need backend endpoint
     updateProduct: (id, data) => api.put(`/pos/products/${id}`, data), // Need backend endpoint
-    deleteProduct: (id) => api.delete(`/pos/products/${id}`), // Need backend endpoint
+    deleteProduct: (id) => api.delete(`/pos/products/${id}`),
+    lookupGlobalBarcode: (barcode) => api.get(`/pos/products/lookup/${barcode}`),
 
     createOrder: (orderData) => api.post('/pos/orders', orderData),
     getOrders: (params) => api.get('/pos/orders', { params }),
@@ -94,6 +98,12 @@ export const posService = {
 
     // System Settings
     getSystemSettings: () => api.get('/pos/settings'),
+
+    // Users (Staff)
+    getUsers: () => api.get('/pos/users'),
+    createStoreUser: (data) => api.post('/pos/users', data),
+    updateStoreUser: (id, data) => api.put(`/pos/users/${id}`, data),
+    deleteStoreUser: (id) => api.delete(`/pos/users/${id}`),
 
     // Support Tickets
     getMyTickets: () => api.get('/pos/tickets'),

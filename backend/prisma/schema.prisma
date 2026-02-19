@@ -1,10 +1,12 @@
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [pg_trgm]
 }
 
 // ==========================================
@@ -61,6 +63,7 @@ model Store {
   importReceipts     ImportReceipt[]
   appLogs            AppLog[]
   supportTickets     SupportTicket[]
+  inventoryItems     Inventory[]
 
   @@map("stores")
 }
@@ -170,11 +173,33 @@ model Product {
   categoryRel Category? @relation(fields: [categoryId], references: [id])
   brand       Brand?    @relation(fields: [brandId], references: [id])
   
-  invoiceItems InvoiceItem[]
-  returnItems  ReturnItem[]
-  importItems  ImportItem[]
+  invoiceItems   InvoiceItem[]
+  returnItems    ReturnItem[]
+  importItems    ImportItem[]
+  inventoryItems Inventory[]
 
+  @@index([barcode])
+  @@index([name])
   @@map("products")
+}
+
+model Inventory {
+  id           Int      @id @default(autoincrement())
+  productId    Int      @map("product_id")
+  storeId      Int      @map("store_id")
+  quantity     Int      @default(0)
+  minStock     Int      @default(5) @map("min_stock")
+  expiryDate   DateTime? @map("expiry_date")
+  batchCode    String?   @map("batch_code")
+  location     String?   // Shelf A1, Rack B2
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  store   Store   @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@index([expiryDate])
+  @@map("inventory")
 }
 
 model Invoice {
@@ -463,4 +488,3 @@ model TicketMessage {
 
   @@map("ticket_messages")
 }
-

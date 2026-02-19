@@ -28,6 +28,7 @@ class ApiService {
     async request(path, options = {}) {
         const headers = {
             'Content-Type': 'application/json',
+            'Accept': 'application/json',
             ...options.headers,
         };
 
@@ -51,8 +52,8 @@ class ApiService {
             const contentType = response.headers.get('content-type');
             if (!contentType || !contentType.includes('application/json')) {
                 const text = await response.text();
-                console.error('Non-JSON response:', text);
-                throw new Error('Server returned non-JSON response');
+                console.error('Non-JSON response (Status:', response.status, '):', text);
+                throw new Error(`Server returned non-JSON response (Status: ${response.status})`);
             }
 
             const data = await response.json();
@@ -146,7 +147,13 @@ class ApiService {
     resetStorePassword(id, newPassword) {
         return this.request(`/admin/stores/${id}/reset-password`, {
             method: 'POST',
-            body: JSON.stringify({ newPassword }),
+            body: JSON.stringify({ newPassword })
+        });
+    }
+
+    getStoreLoginToken(id) {
+        return this.request(`/admin/stores/${id}/token`, {
+            method: 'GET'
         });
     }
 
@@ -172,6 +179,42 @@ class ApiService {
     deletePlan(id) {
         return this.request(`/admin/plans/${id}`, {
             method: 'DELETE',
+        });
+    }
+
+    // Products
+    getProducts(params = {}) {
+        const query = new URLSearchParams(params).toString();
+        return this.request(`/admin/products?${query}`);
+    }
+
+    deleteProduct(id) {
+        return this.request(`/admin/products/${id}`, {
+            method: 'DELETE',
+        });
+    }
+
+    importProducts(file) {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        // request method handles JSON by default, need to handle FormData
+        return fetch(`${API_BASE}/admin/products/import`, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'Authorization': `Bearer ${this.token}`,
+                'Accept': 'application/json'
+            },
+        }).then(async res => {
+            if (res.status === 401) {
+                this.clearToken();
+                window.location.href = '/login';
+                throw new Error('Unauthorized');
+            }
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Lỗi nhập dữ liệu');
+            return data;
         });
     }
 

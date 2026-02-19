@@ -2,10 +2,12 @@ import { Response } from 'express';
 import prisma from '../config/database';
 import { AuthRequest } from '../middleware/auth';
 import { logAudit } from '../utils/audit';
+import { OFFService } from '../services/off.service';
 
 export const getProducts = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
-        const storeId = parseInt(req.user?.storeId || '0');
+        const storeIdStr = String(req.user?.storeId || '0');
+        const storeId = parseInt(storeIdStr);
         const { search, categoryId, page, limit } = req.query;
 
         const where: any = { storeId: storeId as any };
@@ -50,7 +52,8 @@ export const getProducts = async (req: AuthRequest, res: Response): Promise<void
 
 export const getProductByBarcode = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
-        const storeId = parseInt(req.user?.storeId || '0');
+        const storeIdStr = String(req.user?.storeId || '0');
+        const storeId = parseInt(storeIdStr);
         const { barcode } = req.params;
 
         const product = await prisma.product.findFirst({
@@ -71,7 +74,8 @@ export const getProductByBarcode = async (req: AuthRequest, res: Response): Prom
 
 export const createProduct = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
-        const storeId = parseInt(req.user?.storeId || '0');
+        const storeIdStr = String(req.user?.storeId || '0');
+        const storeId = parseInt(storeIdStr);
         const { name, barcode, price, priceIn, currentStock, minStockThreshold, category, categoryId, brandId, unit, imageUrl } = req.body;
 
         // Check duplicate barcode
@@ -109,7 +113,8 @@ export const createProduct = async (req: AuthRequest, res: Response): Promise<vo
 
 export const updateProduct = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
-        const storeId = parseInt(req.user?.storeId || '0');
+        const storeIdStr = String(req.user?.storeId || '0');
+        const storeId = parseInt(storeIdStr);
         const { id } = req.params;
         const { name, barcode, price, priceIn, currentStock, minStockThreshold, category, categoryId, brandId, unit, imageUrl } = req.body;
 
@@ -157,9 +162,31 @@ export const updateProduct = async (req: AuthRequest, res: Response): Promise<vo
     }
 };
 
+export const lookupBarcodeByOFF = async (req: AuthRequest, res: Response): Promise<void> => {
+    try {
+        const { barcode } = req.params;
+        if (!barcode) {
+            res.status(400).json({ error: 'Mã vạch không hợp lệ' });
+            return;
+        }
+
+        const product = await OFFService.getProductByBarcode(barcode);
+
+        if (!product) {
+            res.status(404).json({ error: 'Không tìm thấy thông tin trên hệ thống quốc tế' });
+            return;
+        }
+
+        res.json({ data: product });
+    } catch (error) {
+        res.status(500).json({ error: 'Lỗi server' });
+    }
+};
+
 export const deleteProduct = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
-        const storeId = parseInt(req.user?.storeId || '0');
+        const storeIdStr = String(req.user?.storeId || '0');
+        const storeId = parseInt(storeIdStr);
         const { id } = req.params;
 
         const existing = await prisma.product.findFirst({ where: { id: parseInt(id), storeId: storeId as any } });

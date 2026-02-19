@@ -9,10 +9,21 @@ export const getPlans = async (req: AuthRequest, res: Response): Promise<void> =
             include: { _count: { select: { stores: true } } },
         });
         // Parse JSON string back to object for frontend
-        const parsedPlans = plans.map(p => ({
-            ...p,
-            features: p.features ? JSON.parse(p.features) : []
-        }));
+        const parsedPlans = plans.map(p => {
+            let features = [];
+            if (p.features) {
+                try {
+                    features = typeof p.features === 'string' ? JSON.parse(p.features) : p.features;
+                } catch (e) {
+                    console.error('Failed to parse features for plan', p.id, e);
+                    features = [];
+                }
+            }
+            return {
+                ...p,
+                features
+            };
+        });
         res.json({ data: parsedPlans });
     } catch (error) {
         console.error('Get plans error:', error);

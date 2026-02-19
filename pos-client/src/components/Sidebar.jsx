@@ -14,6 +14,7 @@ import {
     Tags, // For Categories
     User,
     ShieldAlert,
+    ShieldCheck,
     Crown,
     Lock
 } from 'lucide-react';
@@ -43,7 +44,8 @@ const MENU_GROUPS = [
     {
         title: 'Báo cáo',
         items: [
-            { path: '/report', label: 'Báo cáo thuế & Doanh thu', icon: BarChart3, feature: 'reports' }
+            { path: '/revenue-report', label: 'Báo cáo doanh thu', icon: BarChart3, feature: 'revenue_report' },
+            { path: '/tax-report', label: 'Báo cáo thuế & Sổ sách', icon: ShieldCheck, feature: 'tax_report' }
         ]
     },
     {
@@ -83,8 +85,8 @@ export default function Sidebar() {
                     <ShoppingCart size={24} className="text-white" />
                 </div>
                 <div className="min-w-0 flex-1">
-                    <h1 className="font-bold text-xl tracking-wide truncate" title={shopName || 'POS Pro'}>
-                        {shopName || 'POS Pro'}
+                    <h1 className="font-bold text-xl tracking-wide truncate" title={shopName || 'EPOS Pro'}>
+                        {shopName || 'EPOS Pro'}
                     </h1>
                     <p className="text-xs text-slate-400 font-medium truncate" title={address || 'Store Manager'}>
                         {address || 'Store Manager'}

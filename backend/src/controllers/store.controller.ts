@@ -2,6 +2,8 @@ import { Response } from 'express';
 import prisma from '../config/database';
 import { AuthRequest } from '../middleware/auth';
 import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
+import { config } from '../config';
 
 export const getStores = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
@@ -222,6 +224,11 @@ export const resetStorePassword = async (req: AuthRequest, res: Response): Promi
             return;
         }
 
+        if (!store.phone) {
+            res.status(400).json({ error: 'Cửa hàng không có số điện thoại liên kết' });
+            return;
+        }
+
         // Tìm user là chủ cửa hàng (role owner)
         // Trong hệ thống này, username của owner trùng với SĐT cửa hàng
         const owner = await prisma.user.findFirst({
@@ -247,6 +254,45 @@ export const resetStorePassword = async (req: AuthRequest, res: Response): Promi
 
     } catch (error) {
         console.error('Reset password error:', error);
+        res.status(500).json({ error: 'Lỗi server' });
+    }
+};
+
+export const getStoreLoginToken = async (req: AuthRequest, res: Response): Promise<void> => {
+    try {
+        const id = parseInt(req.params.id);
+
+        if (isNaN(id)) {
+            res.status(400).json({ error: 'ID cửa hàng không hợp lệ' });
+            return;
+        }
+
+        const user = await prisma.user.findFirst({
+            where: {
+                storeId: id,
+                role: 'owner'
+            }
+        });
+
+        if (!user) {
+            res.status(404).json({ error: 'Không tìm thấy chủ cửa hàng' });
+            return;
+        }
+
+        const token = jwt.sign(
+            {
+                userId: user.id,
+                storeId: user.storeId,
+                role: user.role,
+                username: user.username
+            },
+            config.jwt.secret as string,
+            { expiresIn: '1d' }
+        );
+
+        res.json({ success: true, token });
+    } catch (error) {
+        console.error('Get Store Token error:', error);
         res.status(500).json({ error: 'Lỗi server' });
     }
 };

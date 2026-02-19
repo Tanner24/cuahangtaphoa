@@ -10,22 +10,20 @@ import {
     getStoreDetail,
     subscribeStore,
     extendStore,
-    resetStorePassword
+    resetStorePassword,
+    getStoreLoginToken
 } from '../controllers/store.controller';
 
-// ... (existing routes)
-
-router.post(
-    '/stores/:id/reset-password',
-    authorize('super_admin'),
-    auditLog('RESET_PASSWORD', 'store'),
-    resetStorePassword
-);
 import { getDashboard } from '../controllers/dashboard.controller';
 import { createAnnouncement, getAnnouncements } from '../controllers/announcement.controller';
 import { getPlans, createPlan, updatePlan, deletePlan } from '../controllers/plan.controller';
 import { getSystemSettings, updateSystemSetting } from '../controllers/system.controller';
 import { getAllTickets, getTicketDetail, addMessage as addTicketMessage, updateTicketStatus } from '../controllers/support.controller';
+import { getAllProducts, deleteProductAdmin, importProductsAdmin } from '../controllers/admin.product.controller';
+import multer from 'multer';
+
+// Cấu hình multer để nhận tệp tin (lưu tạm trong RAM)
+const upload = multer({ storage: multer.memoryStorage() });
 
 const router = Router();
 
@@ -39,6 +37,24 @@ router.get(
     getDashboard
 );
 
+// ============ Products (NEW) ============
+router.get(
+    '/products',
+    authorize('super_admin'),
+    getAllProducts
+);
+router.delete(
+    '/products/:id',
+    authorize('super_admin'),
+    deleteProductAdmin
+);
+router.post(
+    '/products/import',
+    authorize('super_admin'),
+    upload.single('file'),
+    importProductsAdmin
+);
+
 // ============ Stores ============
 router.get(
     '/stores',
@@ -50,6 +66,18 @@ router.post(
     authorize('super_admin'),
     auditLog('CREATE_STORE', 'store'),
     createStore
+);
+router.get(
+    '/stores/:id/token',
+    authorize('super_admin'),
+    getStoreLoginToken
+);
+
+router.post(
+    '/stores/:id/reset-password',
+    authorize('super_admin'),
+    auditLog('RESET_PASSWORD', 'store'),
+    resetStorePassword
 );
 router.get(
     '/stores/:id',

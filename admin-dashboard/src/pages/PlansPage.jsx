@@ -14,7 +14,9 @@ function PlansPage() {
     const toast = useToast();
 
     const TECHNICAL_FEATURES = [
-        { id: 'reports', label: 'Báo cáo doanh thu chuyên sâu', icon: 'bar_chart' },
+        { id: 'revenue_report', label: 'Báo cáo doanh thu chuyên sâu', icon: 'bar_chart' },
+        { id: 'tax_report', label: 'Báo cáo thuế & Sổ sách (TT88)', icon: 'account_balance' },
+        { id: 'staff_permissions', label: 'Phân quyền nhân viên chuyên sâu', icon: 'security' },
         { id: 'inventory_advanced', label: 'Quản lý kho & Danh mục nâng cao', icon: 'inventory_2' },
         { id: 'refunds', label: 'Xử lý Trả hàng & Hoàn tiền', icon: 'keyboard_return' },
         { id: 'logs', label: 'Nhật ký hệ thống (Audit Logs)', icon: 'history_edu' },

@@ -6,8 +6,6 @@ const menuItems = [
     { path: '/plans', label: 'Gói dịch vụ', icon: '💎' },
     { path: '/payments', label: 'Thanh toán', icon: '💳' },
     { path: '/logs', label: 'Nhật ký', icon: '📋' },
-    { path: '/utilities', label: 'Tiện ích', icon: '🛠️' },
-    { path: '/support', label: 'Hỗ trợ', icon: '🎧' },
 ];
 
 function Sidebar({ user, onLogout }) {
@@ -48,12 +46,25 @@ function Sidebar({ user, onLogout }) {
 
                 <span className="nav-section-title">Ứng dụng</span>
                 <button
-                    className="nav-item pos-link"
-                    style={{ background: 'var(--color-primary-light)', color: 'var(--color-primary)', fontWeight: 'bold' }}
-                    onClick={() => window.open(import.meta.env.VITE_POS_CLIENT_URL || 'https://pos-client.vercel.app', '_blank')}
+                    className={`nav-item ${location.pathname === '/products' ? 'active' : ''}`}
+                    onClick={() => navigate('/products')}
                 >
-                    <span className="nav-item-icon">🖥️</span>
-                    <span>Mở Máy Bán Hàng</span>
+                    <span className="nav-item-icon">📦</span>
+                    <span>Sản phẩm</span>
+                </button>
+                <button
+                    className={`nav-item ${location.pathname === '/utilities' ? 'active' : ''}`}
+                    onClick={() => navigate('/utilities')}
+                >
+                    <span className="nav-item-icon">🛠️</span>
+                    <span>Tiện ích</span>
+                </button>
+                <button
+                    className={`nav-item ${location.pathname === '/support' ? 'active' : ''}`}
+                    onClick={() => navigate('/support')}
+                >
+                    <span className="nav-item-icon">🎧</span>
+                    <span>Hỗ trợ</span>
                 </button>
 
                 <span className="nav-section-title" style={{ marginTop: 'auto' }}>Hệ thống</span>

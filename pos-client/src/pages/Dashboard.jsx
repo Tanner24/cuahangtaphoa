@@ -76,6 +76,7 @@ export default function Dashboard() {
     const safeData = data || {
         overview: { revenue: 0, totalOrders: 0, profit: 0, debtAdded: 0 },
         chart: [],
+        topProducts: [],
         lowStockCount: 0
     };
 
@@ -136,47 +137,84 @@ export default function Dashboard() {
 
             {/* Chart & Others */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div className="lg:col-span-2 bg-white p-6 rounded-2xl border border-slate-100 shadow-sm min-h-[400px]">
-                    <h3 className="font-bold text-lg text-slate-800 mb-6 flex justify-between">
-                        Biểu đồ doanh thu
-                        <span className="text-sm font-normal text-slate-400 bg-slate-100 px-3 py-1 rounded-lg">{filterOptions.find(o => o.value === filter)?.label}</span>
-                    </h3>
+                <div className="lg:col-span-2 space-y-8">
+                    <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm min-h-[400px]">
+                        <h3 className="font-bold text-lg text-slate-800 mb-6 flex justify-between">
+                            Biểu đồ doanh thu
+                            <span className="text-sm font-normal text-slate-400 bg-slate-100 px-3 py-1 rounded-lg">{filterOptions.find(o => o.value === filter)?.label}</span>
+                        </h3>
 
-                    {chart && chart.length > 0 ? (
-                        <div className="h-64 flex items-end justify-between gap-2 md:gap-4 mt-8 pb-2 border-b border-slate-100 relative">
-                            {/* Grid Lines */}
-                            <div className="absolute inset-0 flex flex-col justify-between pointer-events-none opacity-20 z-0">
-                                {[...Array(5)].map((_, i) => <div key={i} className="w-full h-px bg-slate-400 dashed"></div>)}
-                            </div>
+                        {chart && chart.length > 0 ? (
+                            <div className="h-64 flex items-end justify-between gap-2 md:gap-4 mt-8 pb-2 border-b border-slate-100 relative">
+                                {/* Grid Lines */}
+                                <div className="absolute inset-0 flex flex-col justify-between pointer-events-none opacity-20 z-0">
+                                    {[...Array(5)].map((_, i) => <div key={i} className="w-full h-px bg-slate-400 dashed"></div>)}
+                                </div>
 
-                            {chart.map((d, idx) => {
-                                const max = Math.max(...chart.map(c => Number(c.revenue))) || 1;
-                                const val = Number(d.revenue);
-                                const h = (val / max) * 100;
+                                {chart.map((d, idx) => {
+                                    const max = Math.max(...chart.map(c => Number(c.revenue))) || 1;
+                                    const val = Number(d.revenue);
+                                    const h = (val / max) * 100;
 
-                                return (
-                                    <div key={idx} className="flex flex-col items-center flex-1 group relative h-full justify-end z-10 hover:bg-slate-50/50 rounded-lg transition-colors pb-6">
-                                        {val > 0 ? (
-                                            <div
-                                                className="w-full max-w-[40px] bg-blue-500 rounded-t-md hover:bg-blue-600 transition-all duration-300 relative shadow-sm"
-                                                style={{ height: `${Math.max(h, 2)}%` }}
-                                            >
-                                                {/* Tooltip */}
-                                                <div className="absolute -top-10 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900 text-white text-[10px] font-bold px-2 py-1 rounded shadow-lg whitespace-nowrap z-50 pointer-events-none">
-                                                    {formatMoney(d.revenue)}
+                                    return (
+                                        <div key={idx} className="flex flex-col items-center flex-1 group relative h-full justify-end z-10 hover:bg-slate-50/50 rounded-lg transition-colors pb-6">
+                                            {val > 0 ? (
+                                                <div
+                                                    className="w-full max-w-[40px] bg-blue-500 rounded-t-md hover:bg-blue-600 transition-all duration-300 relative shadow-sm"
+                                                    style={{ height: `${Math.max(h, 2)}%` }}
+                                                >
+                                                    {/* Tooltip */}
+                                                    <div className="absolute -top-10 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900 text-white text-[10px] font-bold px-2 py-1 rounded shadow-lg whitespace-nowrap z-50 pointer-events-none">
+                                                        {formatMoney(d.revenue)}
+                                                    </div>
                                                 </div>
+                                            ) : (
+                                                <div className="h-1 w-full max-w-[20px] bg-slate-200 rounded-full mb-1"></div>
+                                            )}
+                                            <div className="absolute bottom-0 text-[10px] text-slate-400 font-bold w-full text-center group-hover:text-slate-800 transition-colors">{d.date.split('/')[0]}</div>
+                                        </div>
+                                    )
+                                })}
+                            </div>
+                        ) : (
+                            <div className="h-64 flex items-center justify-center text-slate-400">Chưa có dữ liệu biểu đồ</div>
+                        )}
+                    </div>
+
+                    <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm min-h-[400px]">
+                        <h3 className="font-bold text-lg text-slate-800 mb-6 flex items-center gap-2">
+                            <span className="material-icons text-blue-500">star</span>
+                            Sản phẩm bán chạy nhất
+                        </h3>
+
+                        {safeData.topProducts && safeData.topProducts.length > 0 ? (
+                            <div className="space-y-6">
+                                {safeData.topProducts.map((p, i) => {
+                                    const maxQty = Math.max(...safeData.topProducts.map(tp => tp.quantity)) || 1;
+                                    const width = (p.quantity / maxQty) * 100;
+                                    return (
+                                        <div key={i} className="space-y-1">
+                                            <div className="flex justify-between text-sm">
+                                                <span className="font-bold text-slate-700 truncate max-w-[180px]">{p.name}</span>
+                                                <span className="font-black text-blue-600">{p.quantity} <span className="text-[10px] text-slate-400 font-normal uppercase">{p.unit}</span></span>
                                             </div>
-                                        ) : (
-                                            <div className="h-1 w-full max-w-[20px] bg-slate-200 rounded-full mb-1"></div>
-                                        )}
-                                        <div className="absolute bottom-0 text-[10px] text-slate-400 font-bold w-full text-center group-hover:text-slate-800 transition-colors">{d.date.split('/')[0]}</div>
-                                    </div>
-                                )
-                            })}
-                        </div>
-                    ) : (
-                        <div className="h-64 flex items-center justify-center text-slate-400">Chưa có dữ liệu biểu đồ</div>
-                    )}
+                                            <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+                                                <div
+                                                    className="h-full bg-blue-500 rounded-full transition-all duration-1000"
+                                                    style={{ width: `${width}%` }}
+                                                ></div>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        ) : (
+                            <div className="h-64 flex flex-col items-center justify-center text-slate-400">
+                                <span className="material-icons text-4xl mb-2 opacity-20">inventory_2</span>
+                                <p className="text-sm">Chưa có dữ liệu bán hàng</p>
+                            </div>
+                        )}
+                    </div>
                 </div>
 
                 <div className="space-y-6">
@@ -253,10 +291,9 @@ export default function Dashboard() {
                         </div>
                     </div>
                 </div>
+                <AnnouncementPopup />
+                <SupportModal isOpen={showSupport} onClose={() => setShowSupport(false)} />
             </div>
-
-            <AnnouncementPopup />
-            <SupportModal isOpen={showSupport} onClose={() => setShowSupport(false)} />
         </div>
     );
 }

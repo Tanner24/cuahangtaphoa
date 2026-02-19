@@ -157,13 +157,52 @@ export const register = async (req: Request, res: Response): Promise<void> => {
             ...tokens
         });
 
-    } catch (error) {
+    } catch (error: any) {
         console.error('Register error:', error);
-        res.status(500).json({ error: 'Lỗi đăng ký: ' + (error as any).message });
+        // TRẢ VỀ LỖI CHI TIẾT ĐỂ DEBUG (CHỈ DÙNG KHI DEV/DEBUG)
+        res.status(500).json({
+            error: 'Lỗi đăng ký (Debug)',
+            message: error.message,
+            stack: error.stack,
+            code: error.code,
+            meta: error.meta
+        });
     }
 };
 
 export const refreshToken = async (req: Request, res: Response): Promise<void> => {
     // Implement refresh logic if needed
     res.status(501).json({ error: 'Not implemented yet' });
+};
+
+export const getMe = async (req: Request, res: Response): Promise<void> => {
+    try {
+        const userId = (req as any).user?.userId;
+        if (!userId) {
+            res.status(401).json({ error: 'Chưa đăng nhập' });
+            return;
+        }
+
+        const user = await prisma.user.findUnique({
+            where: { id: userId },
+            include: { store: true }
+        });
+
+        if (!user) {
+            res.status(404).json({ error: 'Không tìm thấy người dùng' });
+            return;
+        }
+
+        res.json({
+            id: user.id,
+            username: user.username,
+            fullName: user.fullName,
+            role: user.role,
+            storeId: user.storeId,
+            storeName: user.store?.name
+        });
+    } catch (error) {
+        console.error('Get Me error:', error);
+        res.status(500).json({ error: 'Lỗi server' });
+    }
 };

@@ -3,8 +3,8 @@ import jwt from 'jsonwebtoken';
 import { config } from '../config';
 
 export interface AuthPayload {
-    userId: string;   // JWT stores as string
-    storeId: string;  // JWT stores as string
+    userId: number;
+    storeId: number;
     role: string;
 }
 

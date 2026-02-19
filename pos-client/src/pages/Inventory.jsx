@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import api, { posService } from '../services/api';
-import { Html5QrcodeScanner } from 'html5-qrcode';
+import Quagga from '@ericblade/quagga2';
 import { useQuota } from '../hooks/useQuota';
 import {
     Scan,
@@ -23,6 +24,7 @@ import {
 } from 'lucide-react';
 
 export default function Inventory() {
+    const navigate = useNavigate();
     const [products, setProducts] = useState([]);
     const [categories, setCategories] = useState([]);
     const [brands, setBrands] = useState([]);
@@ -31,6 +33,7 @@ export default function Inventory() {
     const [showUpgradeModal, setShowUpgradeModal] = useState(false);
     const [editingProduct, setEditingProduct] = useState(null);
     const [isScanning, setIsScanning] = useState(false);
+    const [isLookingUp, setIsLookingUp] = useState(false);
     const { checkLimit, isPro } = useQuota();
 
     // Auto Deduct State
@@ -63,24 +66,64 @@ export default function Inventory() {
         } catch (e) { console.log("Audio failed", e); }
     };
 
-    // Scanner logic
+    // Scanner logic with Quagga2
     useEffect(() => {
-        let scanner = null;
         if (isScanning) {
-            scanner = new Html5QrcodeScanner("reader", {
-                fps: 10,
-                qrbox: { width: 250, height: 150 },
-                aspectRatio: 1.0
+            Quagga.init({
+                inputStream: {
+                    name: "Live",
+                    type: "LiveStream",
+                    target: document.querySelector('#reader'),
+                    constraints: {
+                        width: { min: 640 },
+                        height: { min: 480 },
+                        facingMode: "environment",
+                        aspectRatio: { min: 1, max: 2 }
+                    },
+                },
+                locator: {
+                    patchSize: "medium",
+                    halfSample: true
+                },
+                numOfWorkers: navigator.hardwareConcurrency || 4,
+                decoder: {
+                    readers: [
+                        "code_128_reader",
+                        "ean_reader",
+                        "ean_8_reader",
+                        "code_39_reader",
+                        "upc_reader",
+                        "upc_e_reader"
+                    ]
+                },
+                locate: true
+            }, function (err) {
+                if (err) {
+                    console.error("Quagga init error:", err);
+                    setIsScanning(false);
+                    return;
+                }
+                Quagga.start();
             });
 
-            scanner.render(async (decodedText) => {
-                playBeep();
-                setIsScanning(false);
-                scanner.clear();
-                handleBarcodeLookup(decodedText);
-            }, (error) => { });
+            const handleDetected = (result) => {
+                if (result.codeResult && result.codeResult.code) {
+                    const code = result.codeResult.code;
+                    // Chống nhiễu: Quagga có thể trả về nhiều kết quả rác, 
+                    // ta tắt quét ngay khi nhận được code hợp lệ đầu tiên
+                    playBeep();
+                    setIsScanning(false);
+                    handleBarcodeLookup(code);
+                }
+            };
+
+            Quagga.onDetected(handleDetected);
+
+            return () => {
+                Quagga.offDetected(handleDetected);
+                Quagga.stop();
+            };
         }
-        return () => { if (scanner) scanner.clear().catch(e => console.log(e)); };
     }, [isScanning]);
 
     const handleBarcodeLookup = async (code) => {
@@ -91,20 +134,28 @@ export default function Inventory() {
                 return;
             }
         }
+
         setFormData(prev => ({ ...prev, barcode: code }));
+        setIsLookingUp(true);
+
         try {
-            const res = await fetch(`https://world.openfoodfacts.org/api/v0/product/${code}.json`);
-            const data = await res.json();
-            if (data.status === 1 && data.product) {
-                const p = data.product;
+            // Sử dụng API thông qua Backend để lấy dữ liệu từ Open Food Facts
+            const res = await posService.lookupGlobalBarcode(code);
+            const p = res.data;
+
+            if (p) {
                 setFormData(prev => ({
                     ...prev,
-                    name: p.product_name_vi || p.product_name || prev.name,
-                    imageUrl: p.image_url || prev.imageUrl,
-                    unit: p.serving_quantity_unit || prev.unit
+                    name: p.name || prev.name,
+                    imageUrl: p.imageUrl || prev.imageUrl,
+                    unit: p.unit || prev.unit,
                 }));
             }
-        } catch (err) { }
+        } catch (err) {
+            console.error("Lookup Error:", err);
+        } finally {
+            setIsLookingUp(false);
+        }
     };
 
     const fetchData = async () => {
@@ -175,10 +226,6 @@ export default function Inventory() {
     const [auditData, setAuditData] = useState({}); // { productId: physicalCount }
     const [lotEntry, setLotEntry] = useState({ productId: '', quantity: '', priceIn: '' });
 
-    useEffect(() => { fetchData(); }, []);
-
-    // ... (keep playBeep and other logic)
-
     const handleAuditAdjustment = async () => {
         try {
             const updates = Object.entries(auditData).map(([id, count]) => {
@@ -212,8 +259,6 @@ export default function Inventory() {
             fetchData();
         } catch (e) { alert('Lỗi: ' + e.message); }
     };
-
-    // ... (rest of the logic)
 
     // Secure Toggle Logic
     const handleToggleAutoDeduct = () => {
@@ -478,17 +523,28 @@ export default function Inventory() {
 
                         <div className="flex-1 overflow-y-auto p-10 space-y-10">
                             {isScanning && (
-                                <div className="p-4 bg-slate-900 rounded-3xl overflow-hidden relative shadow-inner border border-slate-800">
-                                    <div id="reader"></div>
-                                    <button onClick={() => setIsScanning(false)} className="absolute top-4 right-4 bg-white/10 hover:bg-white/20 text-white p-2 rounded-xl backdrop-blur-md"><X size={20} /></button>
+                                <div className="p-0 bg-slate-900 rounded-3xl overflow-hidden relative shadow-inner border border-slate-800 aspect-video mb-8">
+                                    <div id="reader" className="w-full h-full [&>video]:w-full [&>video]:h-full [&>video]:object-cover [&>canvas]:absolute [&>canvas]:top-0 [&>canvas]:left-0 [&>canvas]:w-full [&>canvas]:h-full"></div>
+                                    <div className="absolute inset-0 border-2 border-emerald-500/50 pointer-events-none flex items-center justify-center">
+                                        <div className="w-3/4 h-1/2 border-2 border-emerald-400 rounded-lg shadow-[0_0_50px_rgba(52,211,153,0.3)] flex items-center justify-center">
+                                            <div className="w-full h-0.5 bg-emerald-400 shadow-[0_0_10px_#34d399] animate-[scan_2s_linear_infinite]"></div>
+                                        </div>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsScanning(false)}
+                                        className="absolute top-4 right-4 bg-black/50 hover:bg-black/80 text-white p-3 rounded-2xl backdrop-blur-md z-10 transition-all active:scale-95"
+                                    >
+                                        <X size={20} />
+                                    </button>
                                 </div>
                             )}
 
                             <form id="productForm" onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
                                 <div className="md:col-span-2">
-                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Tên hàng hóa *</label>
-                                    <input required type="text" className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:bg-white focus:border-slate-900 outline-none transition-all font-bold text-lg text-slate-900"
-                                        value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} placeholder="VD: Sữa đặc Cô gái Hà Lan" />
+                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 px-1">Tên hàng hóa *</label>
+                                    <input required type="text" className={`w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:bg-white focus:border-slate-900 outline-none transition-all font-bold text-lg text-slate-900 ${isLookingUp ? 'animate-pulse' : ''}`}
+                                        value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} placeholder={isLookingUp ? "Đang tìm tên sản phẩm..." : "VD: Sữa đặc Cô gái Hà Lan"} />
                                 </div>
 
                                 <div className="md:col-span-2">
@@ -553,7 +609,6 @@ export default function Inventory() {
                 </div>
             )}
 
-            {/* UPGRADE MODAL (Upsell) */}
             {showUpgradeModal && (
                 <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-md z-[100] flex items-center justify-center p-4">
                     <div className="bg-white rounded-[2.5rem] w-full max-w-lg overflow-hidden shadow-2xl animate-in zoom-in duration-300 border border-white/20">

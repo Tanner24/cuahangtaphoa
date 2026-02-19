@@ -97,6 +97,33 @@ export const getPosDashboard = async (req: any, res: Response): Promise<void> =>
             }
         }
 
+        // 5. Top Selling Products
+        const topProducts = await prisma.invoiceItem.groupBy({
+            by: ['productId'],
+            where: {
+                invoice: {
+                    storeId: storeId as any,
+                    createdAt: { gte: startDate, lte: endDate }
+                }
+            },
+            _sum: { quantity: true },
+            orderBy: { _sum: { quantity: 'desc' } },
+            take: 5
+        });
+
+        // Hydrate product names
+        const topProductsHydrated = await Promise.all(topProducts.map(async (item) => {
+            const product = await prisma.product.findUnique({
+                where: { id: item.productId },
+                select: { name: true, unit: true }
+            });
+            return {
+                name: product?.name || 'Sản phẩm đã xóa',
+                quantity: item._sum?.quantity || 0,
+                unit: product?.unit || ''
+            };
+        }));
+
         res.json({
             overview: {
                 revenue: Number(revenueAgg._sum.totalAmount || 0),
@@ -105,6 +132,7 @@ export const getPosDashboard = async (req: any, res: Response): Promise<void> =>
                 debtAdded: Number(debtAgg._sum.totalAmount || 0)
             },
             chart: chartData,
+            topProducts: topProductsHydrated,
             lowStockCount: lowStock
         });
 

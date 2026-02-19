@@ -24,6 +24,10 @@ export default function InvoicePreview({ store, settings, user }) {
                     <p className={`text-slate-500 ${fontSize}`}>Hotline: {store.phone || '...'}</p>
                 </div>
 
+                <div className="text-center my-3">
+                    <h2 className="font-black text-base tracking-widest border-y border-black py-1">HÓA ĐƠN BÁN HÀNG</h2>
+                </div>
+
                 {/* Info */}
                 <div className={`${fontSize} space-y-0.5 mb-2`}>
                     <div className="flex justify-between">
@@ -106,7 +110,8 @@ export default function InvoicePreview({ store, settings, user }) {
                     <p className={`italic whitespace-pre-line ${fontSize}`}>
                         {store.footerText || 'Cảm ơn quý khách và hẹn gặp lại!'}
                     </p>
-                    <p className="text-[8px] text-slate-400">Powered by POS Pro</p>
+                    <p className="text-[8px] text-slate-400">Được cung cấp bởi EPOS Pro</p>
+                    <p className="text-[8px] text-slate-400">0975421439</p>
                 </div>
             </div>
         </div>

@@ -8,7 +8,8 @@ import Dashboard from './pages/Dashboard';
 import Inventory from './pages/Inventory';
 import Orders from './pages/Orders';
 import Debt from './pages/Debt';
-import Report from './pages/Report';
+import RevenueReport from './pages/RevenueReport';
+import TaxReport from './pages/TaxReport';
 import Settings from './pages/Settings';
 import Categories from './pages/Categories'; // New page
 import Refunds from './pages/Refunds'; // New page
@@ -54,7 +55,8 @@ function AppContent() {
                 <Route path="/orders" element={<Orders />} />
                 <Route path="/refunds" element={<Refunds />} /> {/* New Route */}
                 <Route path="/debts" element={<Debt />} />
-                <Route path="/report" element={<Report />} />
+                <Route path="/revenue-report" element={<RevenueReport />} />
+                <Route path="/tax-report" element={<TaxReport />} />
                 <Route path="/logs" element={<Logs />} />
                 <Route path="/settings" element={<Settings />} />
             </Route>

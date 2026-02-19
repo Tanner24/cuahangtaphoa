@@ -10,6 +10,7 @@ import LogsPage from './pages/LogsPage';
 import SettingsPage from './pages/SettingsPage';
 import UtilitiesPage from './pages/UtilitiesPage';
 import SupportPage from './pages/SupportPage';
+import ProductsPage from './pages/ProductsPage';
 import { ToastProvider } from './context/ToastContext';
 
 function App() {
@@ -55,6 +56,7 @@ function App() {
                             <Route path="/logs" element={<LogsPage />} />
                             <Route path="/utilities" element={<UtilitiesPage />} />
                             <Route path="/support" element={<SupportPage />} />
+                            <Route path="/products" element={<ProductsPage />} />
                             <Route path="/settings" element={<SettingsPage user={user} onLogout={handleLogout} />} />
                             <Route path="*" element={<Navigate to="/" replace />} />
                         </Routes>

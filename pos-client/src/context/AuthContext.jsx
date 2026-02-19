@@ -13,16 +13,37 @@ export function AuthProvider({ children }) {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        // Check if token exists on load
-        const token = localStorage.getItem('pos_token');
-        if (token) {
-            // Decode user info (naive approach for MVP)
-            const cachedUser = JSON.parse(localStorage.getItem('pos_user') || 'null');
-            if (cachedUser) {
-                setUser(cachedUser);
+        const initAuth = async () => {
+            // Check for token in URL (Auto-login from Admin)
+            const params = new URLSearchParams(window.location.search);
+            const tokenFromUrl = params.get('token');
+
+            if (tokenFromUrl) {
+                localStorage.setItem('pos_token', tokenFromUrl);
+                // Clean URL
+                window.history.replaceState({}, document.title, window.location.pathname);
             }
-        }
-        setLoading(false);
+
+            const token = localStorage.getItem('pos_token');
+            if (token) {
+                try {
+                    // Verify token and get fresh user data
+                    const user = await authService.getMe();
+                    setUser(user);
+                    localStorage.setItem('pos_user', JSON.stringify(user));
+                } catch (error) {
+                    console.error('Auth verification failed:', error);
+                    // Fallback to cache if network error (not 401, which is handled by interceptor)
+                    const cachedUser = JSON.parse(localStorage.getItem('pos_user') || 'null');
+                    if (cachedUser) {
+                        setUser(cachedUser);
+                    }
+                }
+            }
+            setLoading(false);
+        };
+
+        initAuth();
     }, []);
 
     const login = async (username, password) => {

@@ -35,6 +35,8 @@ export const useQuota = () => {
 
         const featuresLiteral = planFeatures.map(f => f.toLowerCase());
         const mappings = {
+            'revenue_report': ['doanh thu', 'chuyên sâu'],
+            'tax_report': ['thuế', 'sổ sách', 'tt88'],
             'reports': ['báo cáo', 'chuyên sâu', 'doanh thu'],
             'inventory_advanced': ['tất cả tính năng', 'quản lý kho', 'danh mục'],
             'refunds': ['trả hàng', 'hoàn tiền'],
