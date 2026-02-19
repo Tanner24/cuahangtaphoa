@@ -143,6 +143,13 @@ class ApiService {
         });
     }
 
+    resetStorePassword(id, newPassword) {
+        return this.request(`/admin/stores/${id}/reset-password`, {
+            method: 'POST',
+            body: JSON.stringify({ newPassword }),
+        });
+    }
+
     // Plans
     getPlans() {
         return this.request('/admin/plans');

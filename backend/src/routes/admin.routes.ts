@@ -10,7 +10,17 @@ import {
     getStoreDetail,
     subscribeStore,
     extendStore,
+    resetStorePassword
 } from '../controllers/store.controller';
+
+// ... (existing routes)
+
+router.post(
+    '/stores/:id/reset-password',
+    authorize('super_admin'),
+    auditLog('RESET_PASSWORD', 'store'),
+    resetStorePassword
+);
 import { getDashboard } from '../controllers/dashboard.controller';
 import { createAnnouncement, getAnnouncements } from '../controllers/announcement.controller';
 import { getPlans, createPlan, updatePlan, deletePlan } from '../controllers/plan.controller';

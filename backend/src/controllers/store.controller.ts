@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import prisma from '../config/database';
 import { AuthRequest } from '../middleware/auth';
+import bcrypt from 'bcrypt';
 
 export const getStores = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
@@ -201,6 +202,51 @@ export const extendStore = async (req: AuthRequest, res: Response): Promise<void
         res.json({ data: { newExpiredAt: newEndDate }, message: `Gia hạn ${days} ngày cho "${store.name}"` });
     } catch (error) {
         console.error('Extend store error:', error);
+        res.status(500).json({ error: 'Lỗi server' });
+    }
+};
+
+export const resetStorePassword = async (req: AuthRequest, res: Response): Promise<void> => {
+    try {
+        const id = parseInt(req.params.id);
+        const { newPassword } = req.body;
+
+        if (!newPassword || newPassword.length < 6) {
+            res.status(400).json({ error: 'Mật khẩu mới phải có ít nhất 6 ký tự' });
+            return;
+        }
+
+        const store = await prisma.store.findUnique({ where: { id } });
+        if (!store) {
+            res.status(404).json({ error: 'Không tìm thấy cửa hàng' });
+            return;
+        }
+
+        // Tìm user là chủ cửa hàng (role owner)
+        // Trong hệ thống này, username của owner trùng với SĐT cửa hàng
+        const owner = await prisma.user.findFirst({
+            where: {
+                storeId: id,
+                username: store.phone
+            }
+        });
+
+        if (!owner) {
+            res.status(404).json({ error: 'Không tìm thấy tài khoản chủ cửa hàng' });
+            return;
+        }
+
+        const passwordHash = await bcrypt.hash(newPassword, 10);
+
+        await prisma.user.update({
+            where: { id: owner.id },
+            data: { passwordHash }
+        });
+
+        res.json({ message: `Đã reset mật khẩu cho cửa hàng "${store.name}"` });
+
+    } catch (error) {
+        console.error('Reset password error:', error);
         res.status(500).json({ error: 'Lỗi server' });
     }
 };
