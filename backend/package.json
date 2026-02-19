@@ -11,7 +11,7 @@
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate dev",
-    "db:seed": "ts-node-dev src/seed.ts",
+    "db:seed": "ts-node-dev src/seed-data.ts",
     "db:studio": "prisma studio",
     "cron:check-expired": "ts-node-dev src/cron/check-expired.ts"
   },
