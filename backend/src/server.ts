@@ -11,14 +11,7 @@ const app = express();
 // ============ Security Middleware ============
 app.use(helmet());
 app.use(cors({
-    origin: [
-        'http://localhost:3000',
-        'http://localhost:8000',
-        'http://localhost:5173',
-        'https://admin.tenmien.com',
-        process.env.FRONTEND_URL || '', // Allow explicit frontend URL
-        /\.vercel\.app$/,               // Allow all Vercel deployments (Frontend & Backend self-calls)
-    ],
+    origin: true, // Allow all origins (reflects value of Origin header)
     credentials: true,
 }));
 
