@@ -1,22 +1,31 @@
 import { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import prisma from '../config/database';
+import { PrismaClient } from '@prisma/client';
+import { config } from '../config';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'secret';
-const REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'refresh-secret';
+const prisma = new PrismaClient();
 
 // Helper: Generate Tokens
 const generateTokens = (user: any) => {
     const accessToken = jwt.sign(
-        { userId: user.id, storeId: user.storeId, role: user.role },
-        JWT_SECRET,
-        { expiresIn: '1d' } // POS Token lifetime longer
+        {
+            userId: user.id,
+            storeId: user.storeId,
+            role: user.role,
+            username: user.username
+        },
+        config.jwt.secret as string,
+        { expiresIn: config.jwt.expiresIn as any }
     );
+
+    // Refresh token expiry should be parsed or defaulted
+    const refreshExpiry = config.jwt.refreshExpiresIn || '7d';
+
     const refreshToken = jwt.sign(
         { userId: user.id },
-        REFRESH_SECRET,
-        { expiresIn: '7d' }
+        config.jwt.refreshSecret as string,
+        { expiresIn: refreshExpiry as any }
     );
     return { accessToken, refreshToken };
 };
@@ -25,36 +34,45 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     try {
         const { username, password } = req.body;
 
+        // 1. Tìm user theo username 
+        // Lưu ý: Username trong hệ thống này nên là Unique toàn cục (ví dụ SĐT) 
+        // Hoặc client phải gửi kèm storeCode. Hiện tại giả định username (SĐT) là unique.
         const user = await prisma.user.findFirst({
-            where: { username },
+            where: { username }, // Tìm theo username/SĐT
             include: { store: true }
         });
 
-        if (!user || user.passwordHash === 'PLACEHOLDER') { // Check valid user
+        if (!user) {
             res.status(401).json({ error: 'Tên đăng nhập hoặc mật khẩu không đúng' });
             return;
         }
 
+        // 2. Kiểm tra mật khẩu
         const isValid = await bcrypt.compare(password, user.passwordHash);
         if (!isValid) {
             res.status(401).json({ error: 'Tên đăng nhập hoặc mật khẩu không đúng' });
             return;
         }
 
+        // 3. Kiểm tra trạng thái User và Store
         if (!user.isActive) {
             res.status(403).json({ error: 'Tài khoản đã bị khóa' });
             return;
         }
 
-        // Update last login
-        await prisma.user.update({
-            where: { id: user.id },
-            data: { lastLogin: new Date() }
-        });
+        if (user.store && user.store.status === 'suspended') {
+            res.status(403).json({ error: 'Cửa hàng của bạn đã bị tạm khóa. Vui lòng liên hệ Admin.' });
+            return;
+        }
 
+        // 4. Update last login
+        await prisma.user.update({ where: { id: user.id }, data: { lastLogin: new Date() } });
+
+        // 5. Generate Token
         const tokens = generateTokens(user);
 
         res.json({
+            success: true,
             user: {
                 id: user.id,
                 username: user.username,
@@ -72,48 +90,49 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     }
 };
 
-export const registerStore = async (req: Request, res: Response): Promise<void> => {
+export const register = async (req: Request, res: Response): Promise<void> => {
     try {
-        const { storeName, phone, fullName, password, address } = req.body;
+        // Form đăng ký: Tên shop, SĐT (làm username), Họ tên, Mật khẩu
+        const { storeName, phone, fullName, password } = req.body;
 
-        // Validation
         if (!storeName || !phone || !password || !fullName) {
             res.status(400).json({ error: 'Vui lòng điền đầy đủ thông tin' });
             return;
         }
 
-        // Check existing phone (store)
-        const existingStore = await prisma.store.findUnique({ where: { phone } });
-        if (existingStore) {
-            res.status(400).json({ error: 'Số điện thoại này đã được đăng ký cửa hàng' });
+        // 1. Kiểm tra SĐT đã tồn tại chưa (User username)
+        const existingUser = await prisma.user.findFirst({ where: { username: phone } });
+        if (existingUser) {
+            res.status(400).json({ error: 'Số điện thoại này đã được sử dụng' });
             return;
         }
 
+        // 2. Tìm gói Free mặc định
+        const freePlan = await prisma.subscriptionPlan.findFirst({ where: { name: 'Free' } });
+
         const passwordHash = await bcrypt.hash(password, 10);
 
-        // Transaction: Create Store -> Create User -> Create Default Plan (if logic needed)
-        // Here we assign default 'Basic' plan if exists, or null
-        const basicPlan = await prisma.subscriptionPlan.findUnique({ where: { name: 'Basic' } });
-
+        // 3. Transaction tạo Store + Owner
         const result = await prisma.$transaction(async (tx) => {
-            // 1. Create Store
+            // Tạo Store
             const store = await tx.store.create({
                 data: {
                     name: storeName,
-                    phone: phone,
-                    address: address || '',
-                    subscriptionPlanId: basicPlan?.id
-                } as any
+                    phone: phone, // SĐT cửa hàng = SĐT chủ
+                    ownerName: fullName,
+                    status: 'active',
+                    subscriptionPlanId: freePlan?.id,
+                    subscriptionExpiredAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000) // Tặng 1 năm
+                }
             });
 
-            // 2. Create Admin User for Store (Username = Phone for simplicity, or allow custom username)
-            // Let's use Phone as default admin username
+            // Tạo User Owner
             const user = await tx.user.create({
                 data: {
-                    username: phone, // Username is phone number
+                    username: phone, // Username là SĐT
                     passwordHash,
                     fullName,
-                    role: 'admin',
+                    role: 'owner',
                     storeId: store.id
                 }
             });
@@ -121,10 +140,12 @@ export const registerStore = async (req: Request, res: Response): Promise<void> 
             return { store, user };
         });
 
+        // 4. Tự động login luôn
         const tokens = generateTokens(result.user);
 
         res.status(201).json({
-            message: 'Đăng ký thành công',
+            success: true,
+            message: 'Đăng ký cửa hàng thành công',
             user: {
                 id: result.user.id,
                 username: result.user.username,
@@ -138,29 +159,11 @@ export const registerStore = async (req: Request, res: Response): Promise<void> 
 
     } catch (error) {
         console.error('Register error:', error);
-        res.status(500).json({ error: 'Lỗi server đăng ký: ' + (error as any).message });
+        res.status(500).json({ error: 'Lỗi đăng ký: ' + (error as any).message });
     }
 };
 
 export const refreshToken = async (req: Request, res: Response): Promise<void> => {
-    const { refreshToken } = req.body;
-    if (!refreshToken) {
-        res.status(401).json({ error: 'Thiếu Refresh Token' });
-        return;
-    }
-
-    try {
-        const decoded = jwt.verify(refreshToken, REFRESH_SECRET) as any;
-        const user = await prisma.user.findUnique({ where: { id: decoded.userId } });
-
-        if (!user) {
-            res.status(403).json({ error: 'User không tồn tại' });
-            return;
-        }
-
-        const tokens = generateTokens(user);
-        res.json(tokens);
-    } catch (error) {
-        res.status(403).json({ error: 'Refresh Token không hợp lệ' });
-    }
+    // Implement refresh logic if needed
+    res.status(501).json({ error: 'Not implemented yet' });
 };
